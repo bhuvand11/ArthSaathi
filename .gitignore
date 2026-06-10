@@ -1,0 +1,21 @@
+# Python
+nomura_env/
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Node
+node_modules/
+
+# Build files
+dist/
+build/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
