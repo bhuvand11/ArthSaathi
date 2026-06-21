@@ -24,26 +24,46 @@ const PERSONAS = {
 };
 
 const TABS = [
-  { id: "chat",    label: "💬 Chat"        },
-  { id: "scam",    label: "🛡️ Scam Check"  },
-  { id: "health",  label: "📊 Health"      },
-  { id: "nudge",   label: "🔔 Nudges"      },
-  { id: "time",    label: "⏳ Time Machine" },
+  { id: "chat",   label: "💬 Chat"         },
+  { id: "scam",   label: "🛡️ Scam Check"   },
+  { id: "health", label: "📊 Health"       },
+  { id: "nudge",  label: "🔔 Nudges"       },
+  { id: "time",   label: "⏳ Time Machine" },
 ];
+
+const INITIAL_MESSAGES = {
+  rajesh: [{ role: "assistant", content: "Namaste Rajesh! 👋 Main ArthSaathi hoon — aapka personal financial guardian. Aaj kaise madad karoon?", bias: null, agent: "EDUCATION", score_change: 0 }],
+  priya:  [{ role: "assistant", content: "Hello Priya! 👋 I'm ArthSaathi — your personal financial guardian. How can I help you today?", bias: null, agent: "EDUCATION", score_change: 0 }],
+  kisan:  [{ role: "assistant", content: "Namaskara Kisan! 👋 Nanu ArthSaathi — nimmа vyaktigata haNakāsu rakshaka. Indu hēgе sahāya māḍali?", bias: null, agent: "EDUCATION", score_change: 0 }],
+};
 
 export default function App() {
   const [activePersona, setActivePersona] = useState("rajesh");
   const [activeTab, setActiveTab]         = useState("chat");
-  const [scoreHistory, setScoreHistory]   = useState({ rajesh: [38], priya: [55], kisan: [29] });
 
-  const persona = PERSONAS[activePersona];
-  const currentScore = scoreHistory[activePersona].slice(-1)[0];
+  // Persistent chat history per persona
+  const [chatHistories, setChatHistories] = useState(INITIAL_MESSAGES);
+
+  // Persistent score history per persona
+  const [scoreHistory, setScoreHistory] = useState({
+    rajesh: [38], priya: [55], kisan: [29]
+  });
+
+  const persona       = PERSONAS[activePersona];
+  const currentScore  = scoreHistory[activePersona].slice(-1)[0];
 
   const addScore = (delta) => {
     setScoreHistory(prev => ({
       ...prev,
-      [activePersona]: [...prev[activePersona], Math.min(100, Math.max(0, prev[activePersona].slice(-1)[0] + delta))]
+      [activePersona]: [
+        ...prev[activePersona],
+        Math.min(100, Math.max(0, prev[activePersona].slice(-1)[0] + delta))
+      ]
     }));
+  };
+
+  const updateChatHistory = (persona, newMessages) => {
+    setChatHistories(prev => ({ ...prev, [persona]: newMessages }));
   };
 
   const userProfile = {
@@ -56,6 +76,7 @@ export default function App() {
   };
 
   const scoreColor = currentScore >= 70 ? "#1D9E75" : currentScore >= 45 ? "#BA7517" : "#D85A30";
+  const scoreDisplayColor = scoreColor === "#1D9E75" ? "#90EBC8" : scoreColor === "#BA7517" ? "#FAC775" : "#F09595";
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto", fontFamily: "system-ui, sans-serif", minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
@@ -71,9 +92,7 @@ export default function App() {
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 10, opacity: 0.7 }}>Health Score</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: scoreColor === "#1D9E75" ? "#90EBC8" : scoreColor === "#BA7517" ? "#FAC775" : "#F09595" }}>
-            {currentScore}/100
-          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: scoreDisplayColor }}>{currentScore}/100</div>
         </div>
       </div>
 
@@ -106,7 +125,14 @@ export default function App() {
 
       {/* Tab content */}
       <div style={{ flex: 1 }}>
-        {activeTab === "chat"   && <Chat userProfile={userProfile} onScoreChange={addScore} />}
+        {activeTab === "chat"   && (
+          <Chat
+            userProfile={userProfile}
+            onScoreChange={addScore}
+            messages={chatHistories[activePersona]}
+            onMessagesChange={(msgs) => updateChatHistory(activePersona, msgs)}
+          />
+        )}
         {activeTab === "scam"   && <ScamChecker userProfile={userProfile} />}
         {activeTab === "health" && <HealthScore persona={activePersona} scoreHistory={scoreHistory[activePersona]} />}
         {activeTab === "nudge"  && <Nudges userProfile={userProfile} />}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 const API = "http://localhost:8000";
 
@@ -19,33 +19,35 @@ const QUICK = {
   kisan:  ["Sahukar wants 5% monthly interest, kya karu?", "PM-KISAN mein register kaise karein?", "Fasal bima kaise milega?"],
 };
 
-export default function Chat({ userProfile, onScoreChange }) {
-  const [messages, setMessages] = useState([{
-    role: "assistant",
-    content: `Namaste ${userProfile.name}! 👋 Main ArthSaathi hoon — aapka personal financial guardian. Aaj kaise madad karoon?`,
-    bias: null, agent: "EDUCATION", score_change: 0,
-  }]);
+export default function Chat({ userProfile, onScoreChange, messages, onMessagesChange }) {
   const [input, setInput]     = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef             = useRef(null);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const send = async (text) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: msg }]);
+
+    const newMessages = [...messages, { role: "user", content: msg }];
+    onMessagesChange(newMessages);
     setLoading(true);
+
     try {
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
-      const res  = await fetch(`${API}/chat`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${API}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, user_profile: userProfile, conversation_history: history }),
       });
       const data = await res.json();
       if (data.score_change) onScoreChange(data.score_change);
-      setMessages(prev => [...prev, {
+
+      onMessagesChange([...newMessages, {
         role: "assistant",
         content: data.response || data.raw_response || "Please try again.",
         bias: data.bias_detected || null,
@@ -55,7 +57,11 @@ export default function Chat({ userProfile, onScoreChange }) {
         action_item: data.action_item || null,
       }]);
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ Backend not running. Start uvicorn on port 8000.", bias: null }]);
+      onMessagesChange([...newMessages, {
+        role: "assistant",
+        content: "⚠️ Backend not running. Start uvicorn on port 8000.",
+        bias: null,
+      }]);
     }
     setLoading(false);
   };
@@ -64,6 +70,7 @@ export default function Chat({ userProfile, onScoreChange }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)" }}>
+
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "10px", background: "#ECE5DD", display: "flex", flexDirection: "column", gap: 8 }}>
         {messages.map((m, i) => (
@@ -112,7 +119,8 @@ export default function Chat({ userProfile, onScoreChange }) {
 
       {/* Input */}
       <div style={{ display: "flex", padding: "8px", gap: 8, borderTop: "1px solid #e0e0e0", background: "#f9f9f9" }}>
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && send()}
           placeholder="Ask ArthSaathi anything about money..."
           style={{ flex: 1, padding: "10px 14px", borderRadius: 24, border: "1px solid #ccc", fontSize: 13, outline: "none" }} />
         <button onClick={() => send()} disabled={loading}
