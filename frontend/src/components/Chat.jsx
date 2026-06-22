@@ -1,4 +1,5 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { useTTS, LANG_CODE, TTSButton } from "./useTTS";
 
 const API = "http://localhost:8000";
 
@@ -14,40 +15,62 @@ const BIAS_LABELS = {
 };
 
 const QUICK = {
-  rajesh: ["My friend doubled money in crypto, should I try?", "Got loan app offer at 2% monthly, okay?", "How to save with irregular income?"],
-  priya:  ["Bank advisor recommending ULIP, should I buy?", "How to plan daughter's education fund?", "What is Section 80C?"],
-  kisan:  ["Sahukar wants 5% monthly interest, kya karu?", "PM-KISAN mein register kaise karein?", "Fasal bima kaise milega?"],
+  rajesh: ["Mere dost ne crypto mein 3x kamaya, kya main bhi karu?", "2% monthly loan app offer mila, theek hai?", "Irregular income mein saving kaise karoon?"],
+  priya:  ["Bank advisor ULIP recommend kar raha hai, kharidun?", "Mulichi education fund kaśī plan karu?", "Section 80C mhanje kay?"],
+  suresh: ["Sahukar 5% monthly interest mangutunnadu, cheyyanaa?", "PM-KISAN lo register ela cheyyali?", "Panta bhima ela padataadi?"],
+  divya:  ["How do I read my EPF statement?", "What government schemes exist for persons with disabilities?", "Explain Section 80C in simple terms"],
 };
 
 export default function Chat({ userProfile, onScoreChange, messages, onMessagesChange }) {
-  const [input, setInput]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const bottomRef             = useRef(null);
+  const [input, setInput]       = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [listening, setListening] = useState(false);
+  const bottomRef               = useRef(null);
+  const recognitionRef          = useRef(null);
+  const { speak }               = useTTS();
+  const langCode                = LANG_CODE[userProfile.language] || "en-IN";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // STT setup
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert("Speech recognition not supported in this browser. Use Chrome."); return; }
+    const recognition = new SpeechRecognition();
+    recognition.lang = langCode;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult  = (e) => { setInput(e.results[0][0].transcript); setListening(false); };
+    recognition.onerror   = ()  => setListening(false);
+    recognition.onend     = ()  => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }, [langCode]);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setListening(false);
+  }, []);
+
   const send = async (text) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
     setInput("");
-
     const newMessages = [...messages, { role: "user", content: msg }];
     onMessagesChange(newMessages);
     setLoading(true);
-
     try {
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
       const res = await fetch(`${API}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, user_profile: userProfile, conversation_history: history }),
       });
       const data = await res.json();
       if (data.score_change) onScoreChange(data.score_change);
-
-      onMessagesChange([...newMessages, {
+      const assistantMsg = {
         role: "assistant",
         content: data.response || data.raw_response || "Please try again.",
         bias: data.bias_detected || null,
@@ -55,13 +78,14 @@ export default function Chat({ userProfile, onScoreChange, messages, onMessagesC
         agent: data.agent_used || "EDUCATION",
         score_change: data.score_change || 0,
         action_item: data.action_item || null,
-      }]);
+      };
+      onMessagesChange([...newMessages, assistantMsg]);
+      // Auto-speak for Divya
+      if (userProfile.persona === "divya" && assistantMsg.content) {
+        speak(assistantMsg.content, langCode);
+      }
     } catch {
-      onMessagesChange([...newMessages, {
-        role: "assistant",
-        content: "⚠️ Backend not running. Start uvicorn on port 8000.",
-        bias: null,
-      }]);
+      onMessagesChange([...newMessages, { role: "assistant", content: "⚠️ Backend not running. Start uvicorn on port 8000.", bias: null }]);
     }
     setLoading(false);
   };
@@ -69,7 +93,7 @@ export default function Chat({ userProfile, onScoreChange, messages, onMessagesC
   const quickList = QUICK[userProfile.persona] || QUICK.rajesh;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 195px)" }}>
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "10px", background: "#ECE5DD", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -80,11 +104,18 @@ export default function Chat({ userProfile, onScoreChange, messages, onMessagesC
                 ⚠️ {BIAS_LABELS[m.bias] || m.bias} detected
               </div>
             )}
-            <div style={{ maxWidth: "80%", padding: "8px 12px", fontSize: 13, lineHeight: 1.5,
-              borderRadius: m.role === "user" ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
-              background: m.role === "user" ? "#DCF8C6" : "#fff",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
-              {m.content}
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 5, maxWidth: "85%", flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
+              <div style={{
+                padding: "8px 12px", fontSize: 13, lineHeight: 1.5,
+                borderRadius: m.role === "user" ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
+                background: m.role === "user" ? "#DCF8C6" : "#fff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+              }}>
+                {m.content}
+              </div>
+              {m.role === "assistant" && (
+                <TTSButton text={m.content} lang={langCode} small />
+              )}
             </div>
             {m.action_item && (
               <div style={{ marginTop: 4, background: "#E8F5E9", border: "1px solid #1D9E75", borderRadius: 8, padding: "5px 10px", fontSize: 11, color: "#0F6E56", maxWidth: "80%" }}>
@@ -112,22 +143,44 @@ export default function Chat({ userProfile, onScoreChange, messages, onMessagesC
           <button key={i} onClick={() => send(q)}
             style={{ whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 14, border: "1px solid #075E54",
               background: "none", color: "#075E54", fontSize: 11, cursor: "pointer" }}>
-            {q.length > 32 ? q.slice(0, 32) + "…" : q}
+            {q.length > 35 ? q.slice(0, 35) + "…" : q}
           </button>
         ))}
       </div>
 
-      {/* Input */}
-      <div style={{ display: "flex", padding: "8px", gap: 8, borderTop: "1px solid #e0e0e0", background: "#f9f9f9" }}>
-        <input value={input} onChange={e => setInput(e.target.value)}
+      {/* Input row */}
+      <div style={{ display: "flex", padding: "8px", gap: 6, borderTop: "1px solid #e0e0e0", background: "#f9f9f9", alignItems: "center" }}>
+        {/* Mic button */}
+        <button
+          onClick={listening ? stopListening : startListening}
+          title={listening ? "Stop listening" : "Speak"}
+          style={{
+            width: 38, height: 38, borderRadius: "50%", border: "none", flexShrink: 0,
+            background: listening ? "#D32F2F" : "#e0e0e0", color: listening ? "#fff" : "#444",
+            fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+          {listening ? "⏹" : "🎤"}
+        </button>
+
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && send()}
-          placeholder="Ask ArthSaathi anything about money..."
-          style={{ flex: 1, padding: "10px 14px", borderRadius: 24, border: "1px solid #ccc", fontSize: 13, outline: "none" }} />
+          placeholder={userProfile.persona === "divya" ? "Type or use mic above..." : "Ask ArthSaathi anything..."}
+          style={{ flex: 1, padding: "10px 14px", borderRadius: 24, border: "1px solid #ccc", fontSize: 13, outline: "none" }}
+        />
+
         <button onClick={() => send()} disabled={loading}
-          style={{ width: 42, height: 42, borderRadius: "50%", background: "#075E54", border: "none", color: "#fff", fontSize: 18, cursor: "pointer" }}>
+          style={{ width: 38, height: 38, borderRadius: "50%", background: "#075E54", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>
           ➤
         </button>
       </div>
+
+      {listening && (
+        <div style={{ textAlign: "center", fontSize: 11, color: "#D32F2F", padding: "3px 0", background: "#fff3f3" }}>
+          🎤 Listening... tap ⏹ to stop
+        </div>
+      )}
     </div>
   );
 }

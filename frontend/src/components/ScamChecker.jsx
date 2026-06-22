@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TTSButton, LANG_CODE } from "./useTTS";
 
 const API = "http://localhost:8000";
 
@@ -14,11 +15,12 @@ export default function ScamChecker({ userProfile }) {
   const [text, setText]       = useState(SAMPLE);
   const [result, setResult]   = useState(null);
   const [loading, setLoading] = useState(false);
+  const langCode              = LANG_CODE[userProfile.language] || "en-IN";
 
   const check = async () => {
     setLoading(true); setResult(null);
     try {
-      const res  = await fetch(`${API}/scam-check`, {
+      const res = await fetch(`${API}/scam-check`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message_text: text, user_profile: userProfile }),
       });
@@ -27,10 +29,13 @@ export default function ScamChecker({ userProfile }) {
     setLoading(false);
   };
 
-  const verdictColor = result?.verdict === "SCAM" ? "#C62828"
-    : result?.verdict === "SUSPICIOUS" ? "#E65100" : "#2E7D32";
-  const verdictBg = result?.verdict === "SCAM" ? "#FFEBEE"
-    : result?.verdict === "SUSPICIOUS" ? "#FFF8E1" : "#E8F5E9";
+  const verdictColor = result?.verdict === "SCAM" ? "#C62828" : result?.verdict === "SUSPICIOUS" ? "#E65100" : "#2E7D32";
+  const verdictBg    = result?.verdict === "SCAM" ? "#FFEBEE" : result?.verdict === "SUSPICIOUS" ? "#FFF8E1" : "#E8F5E9";
+
+  // Build a full readable summary for TTS
+  const ttsText = result && !result.error
+    ? `Verdict: ${result.verdict}. Risk score: ${result.risk_score} out of 100. ${result.plain_language_verdict} What to do: ${result.what_to_do}`
+    : "";
 
   return (
     <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -52,10 +57,13 @@ export default function ScamChecker({ userProfile }) {
       {result && !result.error && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-          {/* Verdict */}
+          {/* Verdict row with TTS */}
           <div style={{ padding: "12px 16px", borderRadius: 10, background: verdictBg, border: `2px solid ${verdictColor}` }}>
-            <div style={{ fontWeight: 800, fontSize: 22, color: verdictColor }}>
-              {result.verdict === "SCAM" ? "🚨 SCAM" : result.verdict === "SUSPICIOUS" ? "⚠️ SUSPICIOUS" : "✅ LOOKS OK"}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontWeight: 800, fontSize: 22, color: verdictColor }}>
+                {result.verdict === "SCAM" ? "🚨 SCAM" : result.verdict === "SUSPICIOUS" ? "⚠️ SUSPICIOUS" : "✅ LOOKS OK"}
+              </div>
+              <TTSButton text={ttsText} lang={langCode} />
             </div>
             <div style={{ fontSize: 13, marginTop: 5, color: "#333" }}>{result.plain_language_verdict}</div>
           </div>
@@ -69,7 +77,6 @@ export default function ScamChecker({ userProfile }) {
             </div>
           </div>
 
-          {/* Red flags */}
           {result.red_flags?.length > 0 && (
             <div style={{ background: "#FFF3E0", borderRadius: 8, padding: 12 }}>
               <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6, color: "#E65100" }}>🚩 Red flags:</div>
@@ -77,20 +84,17 @@ export default function ScamChecker({ userProfile }) {
             </div>
           )}
 
-          {/* Bias */}
           {result.bias_exploited && (
             <div style={{ background: "#EDE7F6", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
               🧠 <b>Psychological trick used:</b> {result.bias_exploited}
             </div>
           )}
 
-          {/* What to do */}
           <div style={{ background: "#E8F5E9", borderRadius: 8, padding: "10px 12px" }}>
             <div style={{ fontWeight: 700, fontSize: 12, color: "#1B5E20", marginBottom: 4 }}>✅ What to do:</div>
             <div style={{ fontSize: 12, color: "#2E7D32" }}>{result.what_to_do}</div>
           </div>
 
-          {/* Legit alternative */}
           {result.real_alternative && (
             <div style={{ background: "#E3F2FD", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#0D47A1" }}>
               💡 <b>Legit alternative:</b> {result.real_alternative}
