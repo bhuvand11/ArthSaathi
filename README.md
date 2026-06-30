@@ -1,9 +1,6 @@
 # ArthSaathi 💰
 ### Your Behavioral Financial Guardian
 
-**Kakushin 10.0 · Nomura · Team Problem?Solved.**
-Bhuvan Devarakonda & Vanshika Doshi · SVKM's NMIMS MPSTME, Mumbai
-
 ---
 
 ## Table of Contents
