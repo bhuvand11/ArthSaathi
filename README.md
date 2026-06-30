@@ -611,17 +611,6 @@ This provides genuine production-grade observability — visibility into exactly
 | **Phase 3 — Scale** | Weeks 7–10 | RAG knowledge base ingesting RBI/SEBI documents, image OCR for scam screenshot detection, an admin dashboard for NGO/educator partners |
 | **Phase 4 — Measure** | Weeks 11–12 | A/B testing of bias interventions, longitudinal Health Score impact analysis, formal outcome reporting |
 
----
-
-## Business Model
-
-| Channel | Model | Target |
-|---|---|---|
-| **B2C** | Freemium — core chat free, Health Score Pro at ₹99/month | Gig workers, first-time investors |
-| **B2B2C** | White-label licensing, priced per active user | NBFCs, MFIs, cooperative banks (e.g. Fincare, Ujjivan, AU Bank) |
-| **B2G** | Outcome-based government partnership | PMJDY / DigiSaksharta integration, CSC network (500K+ centers) |
-
----
 
 ## Cost Reality
 
