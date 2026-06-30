@@ -612,16 +612,6 @@ This provides genuine production-grade observability — visibility into exactly
 | **Phase 4 — Measure** | Weeks 11–12 | A/B testing of bias interventions, longitudinal Health Score impact analysis, formal outcome reporting |
 
 
-## Cost Reality
-
-- **Groq free tier:** 14,400 requests/day — sufficient for roughly 5,000 active daily users.
-- **Groq paid tier:** ~$0.59 per million tokens — a full conversational turn costs approximately ₹0.04.
-- **At 100K monthly active users** (≈10 messages/user/day): roughly $180/month in LLM costs.
-- **Twilio WhatsApp messaging:** ~$0.005 per message (~₹0.40 per nudge).
-- **Total estimated infrastructure at 100K MAU:** $300–400/month (compute + database + messaging).
-
----
-
 ## References
 
 1. SEBI Investor Survey, 2022 — financial literacy and emergency fund statistics
@@ -637,18 +627,5 @@ This provides genuine production-grade observability — visibility into exactly
 
 ---
 
-## Team
-
-| | Bhuvan Devarakonda | Vanshika Doshi |
-|---|---|---|
-| **Role** | Backend & AI Architecture | Frontend & UX |
-| **Built** | FastAPI server, the full agent loop, all five tool functions, Groq tool-calling integration, LangSmith tracing, bias/scam prompt engineering | React application, all five feature components, four-persona state management, TTS/STT accessibility layer, Time Machine and Health Score UI |
-| **Background** | Data Science & AI/ML, Python, SQL — KPMG Tax Technology & Transformation intern | Full-Stack Development & AI/ML, Python/Java/R, TensorFlow, OpenCV — Spectre Infosystems & Arrow Gold intern |
-
-**Institution:** SVKM's NMIMS Mukesh Patel School of Technology Management and Engineering, Mumbai
-**Team Name:** Problem?Solved.
-**Event:** Kakushin 10.0, Nomura
-
----
 
 *Every other solution gives people financial information. ArthSaathi gives people financial behavior.*
