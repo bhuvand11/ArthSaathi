@@ -26,9 +26,6 @@
 19. [Observability — LangSmith](#observability--langsmith)
 20. [Key Assumptions](#key-assumptions)
 21. [Known Limitations of the Prototype](#known-limitations-of-the-prototype)
-22. [Production Roadmap](#production-roadmap)
-23. [Business Model](#business-model)
-24. [Cost Reality](#cost-reality)
 25. [References](#references)
 26. [Team](#team)
 
