@@ -26,8 +26,8 @@
 19. [Observability — LangSmith](#observability--langsmith)
 20. [Key Assumptions](#key-assumptions)
 21. [Known Limitations of the Prototype](#known-limitations-of-the-prototype)
-25. [References](#references)
-26. [Team](#team)
+22. [References](#references)
+
 
 ---
 
