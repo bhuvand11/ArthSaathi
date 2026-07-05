@@ -24,7 +24,10 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 app = FastAPI(title="ArthSaathi API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://arth-saathi-dusky.vercel.app/",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
