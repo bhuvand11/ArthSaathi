@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TTSButton, LANG_CODE } from "./useTTS";
+import API from "../config";
 
-const API = "http://localhost:8000";
 
 const SAMPLE = `🔥 URGENT - Limited Time Only! 🔥
 Invest Rs 10,000 today → Get Rs 25,000 in 30 days!

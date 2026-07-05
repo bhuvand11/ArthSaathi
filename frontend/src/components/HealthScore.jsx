@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { TTSButton, LANG_CODE } from "./useTTS";
-
-const API = "http://localhost:8000";
+import API from "../config";
 
 const BIAS_LABELS = {
   FOMO: "Fear of missing out", PRESENT_BIAS: "Present bias",

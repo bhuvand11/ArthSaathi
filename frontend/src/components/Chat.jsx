@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useTTS, LANG_CODE, TTSButton } from "./useTTS";
-
-const API = "http://localhost:8000";
+import API from "../config";
 
 const BIAS_COLORS = {
   FOMO: "#D85A30", PRESENT_BIAS: "#534AB7",

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TTSButton, LANG_CODE } from "./useTTS";
+import API from "../config";
 
-const API = "http://localhost:8000";
 
 const SAMPLE_GOALS = {
   rajesh: ["I want to buy a new bike worth Rs 80,000", "I want to go on a trip to Goa with friends"],

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { TTSButton, LANG_CODE } from "./useTTS";
-
-const API = "http://localhost:8000";
+import API from "../config";
 
 const TRIGGERS = [
   { id: "high_income", label: "💰 High income week",  desc: "Simulate payday or good gig week" },
